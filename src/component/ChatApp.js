@@ -53,7 +53,8 @@ const ChatApp = ({userName}) => {
     return (
             <Box
                 sx={{
-                    width: 600,
+                    maxWidth: '600px',
+                    minWidth: '300px',
                     margin: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
