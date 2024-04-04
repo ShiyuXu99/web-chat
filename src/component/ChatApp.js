@@ -1,40 +1,100 @@
-// In ChatApp.js
-import React, { useState, useEffect } from 'react';
-import io from 'socket.io-client';
+import { collection, addDoc } from "firebase/firestore";
+import moment from 'moment';
+import {useEffect, useState} from "react";
+import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import db from "../firebase/firebaseConfig";
+import {Box, Button, FormControl, OutlinedInput, TextField} from "@mui/material";
+import TextBubble from "./TextBubble";
 
-const ChatApp = () => {
+const ChatApp = ({userName}) => {
     const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState([]);
-    const socket = io('https://shiyuxu99.github.io/web-chat/'); // Update with your server URL
+    const formattedDate = moment().format('MMDDYYYY');
+    const [prevMessages, setPrevMessages] = useState([]);
+
+    const addMessage = async () => {
+        try {
+            let data = {} ;
+            const currentMessage = {
+                name: userName,
+                messageText: message,
+                time: moment().format('LT')
+            }
+            if(!prevMessages || Object.keys(prevMessages).length === 0){
+                data = {today: [currentMessage]}
+            }
+            else{
+                const originalData = prevMessages['today']
+                originalData.push(currentMessage)
+                data['today'] = originalData
+            }
+
+            await setDoc(doc(db, "dates", formattedDate), data);
+            setMessage('')
+        } catch (e) {
+            console.error("Error adding document: ", e);
+        }
+    }
 
     useEffect(() => {
-        socket.on('message', (message) => {
-            setMessages([...messages, message]);
-        });
-    }, [messages, socket]);
+        const fetchData = async () => {
+            onSnapshot(doc(db, "dates", formattedDate), (doc) => {
+                setPrevMessages(doc.data())
+            });
+        };
+        fetchData();
+    }, []);
 
-    const handleMessageSend = () => {
-        socket.emit('message', message);
-        setMessage('');
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault(); // Prevents newline insertion
+            addMessage();
+        }
     };
-
     return (
-        <div>
-            <div>
-                {messages.map((msg, index) => (
-                    <div key={index}>
-                        <span>{msg}</span>
-                    </div>
-                ))}
-            </div>
-            <input
-                type="text"
-                placeholder="Type your message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-            />
-            <button onClick={handleMessageSend}>Send</button>
-        </div>
+            <Box
+                sx={{
+                    width: 600,
+                    margin: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    height: '100%',
+                }}
+            >
+                <Box sx={{
+                    textAlign: 'center',
+                    overflowY: 'auto',
+                    maxHeight: '80vh',
+                    '&::-webkit-scrollbar': {
+                        display: 'none'
+                    }
+                }}>
+                        {prevMessages?.today?.map((messageItem) => (
+                            <TextBubble
+                                messageText={messageItem?.messageText}
+                                name={messageItem?.name}
+                                time={messageItem?.time}
+                                userName={userName}
+                           />
+                        ))}
+                </Box>
+                <Box mt={2} sx={{ display: 'flex',  textAlign: 'center', justifyContent:'center', height:'40px' }}>
+                    <TextField
+                        fullWidth
+                        label="输入中..."
+                        id="fullWidth"
+                        multiline
+                        maxRows={4}
+                        size={'small'}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                    />
+                    <Button
+                    variant="outlined" size="small"
+                    onClick={addMessage}>Send</Button>
+                </Box>
+            </Box>
     );
 };
 
