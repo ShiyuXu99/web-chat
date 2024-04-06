@@ -1,36 +1,27 @@
-import puppyImg from '../img/puppyImg.jpg'
-import masterImg from '../img/masterImg.JPG'
+import puppyImg from '../assets/img/puppyImg.jpg'
+import masterImg from '../assets/img/masterImg.JPG'
 
-import {Box, Button, FormControl, OutlinedInput, TextField} from "@mui/material";
-import {Avatar} from "@mui/joy";
+import {Box, useTheme} from "@mui/material";
+import Avatar from '@mui/material/Avatar';
 
 const bubbleStyle = {
     marginTop: '10px',
 };
 
-const bubblePuppyTextStyle = {
-    backgroundColor: '#dbecff',
-    padding: '10px 16px',
-    // border: '1px solid', // Specify 'solid' for the border style
-    // borderColor: '#c1cbd7', // Set the border color
-    borderRadius: '8px'
-};
-
-const bubbleTextStyle = {
-    backgroundColor: '#ffeedb',
-    padding: '10px 16px',
-    // border: '1px solid', // Specify 'solid' for the border style
-    // borderColor: '#c1cbd7', // Set the border color
-    borderRadius: '8px'
-};
-
 
 const bubbleTimeStyle = {
-    fontSize: '10px', // Set the font size to tiny
+    fontSize: '11px', // Set the font size to tiny
 };
 
 const ChatApp = ({name, time, messageText, userName}) => {
     const isUser = name === userName
+    const theme = useTheme();
+    const bubbleTextStyle = {
+        backgroundColor: name === userName? theme.palette.text.background1 : theme.palette.text.background2,
+        padding: '10px 16px',
+        borderRadius: '8px',
+        color: theme.palette.text.secondary
+    };
 
     return (
         <Box
@@ -46,13 +37,13 @@ const ChatApp = ({name, time, messageText, userName}) => {
             <Box display="flex" alignItems="center">
                 {isUser ? (
                     <>
-                        <span style={name === 'master'? bubbleTextStyle : bubblePuppyTextStyle}>{messageText}</span>
+                        <span style={bubbleTextStyle}>{messageText}</span>
                         <Avatar src={name === 'master'? masterImg : puppyImg} alt="avatar_image" sx={{ ml: 1, borderRadius: '8px' }} />
                     </>
                 ) : (
                     <>
                         <Avatar src={name === 'master'? masterImg : puppyImg} alt="avatar_image" sx={{ mr: 1, borderRadius: '8px' }} />
-                        <span style={name === 'master'? bubbleTextStyle : bubblePuppyTextStyle}>{messageText}</span>
+                        <span style={bubbleTextStyle}>{messageText}</span>
                     </>
                 )}
             </Box>
