@@ -23,7 +23,7 @@ const ChatApp = ({userInfo}) => {
     useEffect(() => {
         //get previous data
         const fetchData = async () => {
-            onSnapshot(doc(db, userInfo?.photoURL, "chatHistory"), (doc) => {
+            onSnapshot(doc(db, `User_${userInfo?.email}` , `${userInfo?.photoURL}_chatHistory`), (doc) => {
                 setPrevMessages(doc.data())
             });
         };
@@ -43,7 +43,7 @@ const ChatApp = ({userInfo}) => {
                 data[formattedDate] = [];
             }
             data[formattedDate].push(currentMessage);
-            await setDoc(doc(db, userInfo?.photoURL, "chatHistory"), data);
+            await setDoc(doc(db, `User_${userInfo?.email}`, `${userInfo?.photoURL}_chatHistory`), data);
             setMessage('');
         } catch (e) {
             console.error("Error adding document: ", e);
@@ -73,7 +73,7 @@ const ChatApp = ({userInfo}) => {
 
             >
                 <Box sx={{
-                    overflowY: 'auto',
+                    overflow: 'auto',
                     height: '85vh',
                     padding: '0 16px',
                     '&::-webkit-scrollbar': {

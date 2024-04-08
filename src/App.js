@@ -8,8 +8,6 @@ import './App.css';
 import {ThemeProvider} from "@mui/material/styles";
 import {greenTheme} from "./assets/theme";
 
-
-
 function App() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);

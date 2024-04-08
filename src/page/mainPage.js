@@ -5,6 +5,7 @@ import UserProfile from "../components/UserProfile/UserProfile";
 
 const MainPage = ({userInfo, setCurrentTheme}) => {
     const theme = useTheme();
+    console.log(userInfo)
 
     return (
         <div style={{height: '100%', width:'100%', backgroundColor: theme.palette.background.default}}>
@@ -21,8 +22,7 @@ const MainPage = ({userInfo, setCurrentTheme}) => {
                 </Box>
                 <Box flex={1}
                 >
-                    <CalendarTheme/>
-
+                    <CalendarTheme userInfo={userInfo}/>
                 </Box>
             </Box>
         </div>
