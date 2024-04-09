@@ -5,7 +5,6 @@ import UserProfile from "../components/UserProfile/UserProfile";
 
 const MainPage = ({userInfo, setCurrentTheme}) => {
     const theme = useTheme();
-    console.log(userInfo)
 
     return (
         <div style={{height: '100%', width:'100%', backgroundColor: theme.palette.background.default}}>
