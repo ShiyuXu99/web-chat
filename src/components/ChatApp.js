@@ -1,6 +1,6 @@
 import moment from 'moment';
 import {useEffect, useRef, useState} from "react";
-import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, arrayUnion } from "firebase/firestore";
 import db from "../firebase/firebaseConfig";
 import {Box, Button, TextField, useTheme} from "@mui/material";
 import TextBubble from "./TextBubble";
@@ -23,7 +23,7 @@ const ChatApp = ({userInfo}) => {
     useEffect(() => {
         //get previous data
         const fetchData = async () => {
-            onSnapshot(doc(db, `User_${userInfo?.email}` , `${userInfo?.photoURL}_chatHistory`), (doc) => {
+            onSnapshot(doc(db, `User_chats` , `${userInfo?.photoURL}_chatHistory`), (doc) => {
                 setPrevMessages(doc.data())
             });
         };
@@ -38,12 +38,15 @@ const ChatApp = ({userInfo}) => {
                 time: moment().format('LT')
             };
 
-            let data = { ...prevMessages };
-            if (!data[formattedDate]) {
-                data[formattedDate] = [];
-            }
-            data[formattedDate].push(currentMessage);
-            await setDoc(doc(db, `User_${userInfo?.email}`, `${userInfo?.photoURL}_chatHistory`), data);
+            // let data = { ...prevMessages };
+            // if (!data[formattedDate]) {
+            //     data[formattedDate] = [];
+            // }
+            // data[formattedDate].push(currentMessage);
+            const updateData = {
+                [formattedDate]: arrayUnion(currentMessage)
+            };
+            await setDoc(doc(db, `User_chats`, `${userInfo?.photoURL}_chatHistory`), updateData);
             setMessage('');
         } catch (e) {
             console.error("Error adding document: ", e);

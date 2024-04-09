@@ -8,40 +8,57 @@ import {
     TextField,
     Box,
 } from '@mui/material';
-import {doc, onSnapshot, setDoc, updateDoc} from "firebase/firestore";
+import {doc, onSnapshot, deleteField, deleteDoc, setDoc, updateDoc, arrayUnion} from "firebase/firestore";
 import db from "../../firebase/firebaseConfig";
 import moment from "moment";
+import {debounce} from "lodash";
 
 const TodoList = ({userInfo}) => {
-    const [todos, setTodos] = useState([
-        { id: 1, textField: 'Buy groceries', completed: false },
-        { id: 2, textField: 'Clean the house', completed: true },
-        { id: 3, textField: 'Do laundry', completed: false },
-        // Add more initial todos as needed
-    ]);
+    const [todos, setTodos] = useState([]);
     const [newTodoText, setNewTodoText] = useState('');
 
     useEffect(() => {
-        //get previous data
         const fetchData = async () => {
             onSnapshot(doc(db, `User_${userInfo?.email}` , `TODOList`), (doc) => {
-                const data = [];
-                if(doc.data()){
-                    Object.keys(doc.data()).forEach((key) =>{
-                        data.push(doc.data()[key])
-                    })
+                let prevData =  doc.data()
+                if(prevData){
+                    const {completedList, ...todosWithoutCompletedList} = prevData;
+                    const transformedData = Object.keys(todosWithoutCompletedList).map(key => ({
+                        [key]: todosWithoutCompletedList[key]
+                    }));
+
+                    setTodos(transformedData);
                 }
-                setTodos(data)
+                else setTodos([]);
             });
         };
         fetchData();
     }, []);
 
-    const handleToggle = (todoId) => {
+    const handleToggle = async (todoId, textField) => {
         const updatedTodos = todos.map((todo) =>
-            todo.id === todoId ? { ...todo, completed: !todo.completed } : todo
+            todo.hasOwnProperty(todoId) ? { [todoId]: {...todo[todoId], completed: !todo[todoId].completed} } : todo
         );
         setTodos(updatedTodos);
+
+        const todoRef = doc(db, `User_${userInfo?.email}`, `TODOList`);
+        const debouncedUpdate = debounce(async (fieldKey) => {
+            try {
+                await updateDoc(todoRef, {
+                    [todoId]: deleteField()
+                });
+                const updateCompletedData = {
+                    'completedList' : arrayUnion({ [todoId]: {
+                            textField: textField,
+                            completed: true,
+                        }})
+                };
+                await setDoc(doc(db, `User_${userInfo?.email}`, `TODOList`), updateCompletedData, { merge: true });
+            } catch (error) {
+                console.error("Error removing field: ", error);
+            }
+        }, 1500);
+        debouncedUpdate(todoId);
     };
 
     const handleAddTodo = async (event) => {
@@ -51,22 +68,19 @@ const TodoList = ({userInfo}) => {
                 return; // Prevent adding empty todo
             }
             try {
-                const todoRef = doc(db, `User_${userInfo?.email}`, `TODOList`);
-                const id = Date.now()
+                // const todoRef = doc(db, `User_${userInfo?.email}`, `TODOList`);
                 setNewTodoText('')
-                await updateDoc(todoRef, {
-                    [id]: {
-                        id: id,
-                        textField: newTodoText,
-                        completed: false,
-                    }
-                });
+                const id = Date.now()
+                const newTodo = {
+                    textField: newTodoText,
+                    completed: false,
+                };
+                await setDoc(doc(db, `User_${userInfo?.email}`, "TODOList"), { [id]: newTodo }, { merge: true });
             } catch (e) {
                 console.error("Error adding document: ", e);
             }
         }
     };
-
 
     return (
         <Box width={'60%'} marginTop={'50px'}>
@@ -80,25 +94,29 @@ const TodoList = ({userInfo}) => {
                 }}
                 >
                 <List >
-                    {todos && todos.map((todo) => (
-                        <ListItem key={todo.id} sx={{ marginBottom:'-28px'}}>
-                            <ListItemIcon>
-                                <Checkbox
-                                    checked={todo.completed}
-                                    onChange={() => handleToggle(todo.id)}
+                    {todos && todos.length > 0 && todos.map((todo, index) => {
+                        const id = Object.keys(todo)[0];
+                        const todoItem = todo[id];
+                        return (
+                            <ListItem key={id} sx={{ marginBottom: '-28px' }}>
+                                <ListItemIcon>
+                                    <Checkbox
+                                        checked={todoItem.completed}
+                                        onChange={() => handleToggle(id, todoItem.textField)}
+                                    />
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={todoItem.textField}
+                                    primaryTypographyProps={{ variant: 'body1' }}
+                                    style={{
+                                        textDecoration: todoItem.completed ? 'line-through' : 'none',
+                                        marginLeft: '-16px',
+                                        paddingRight: '8px', // Adjust right padding
+                                    }}
                                 />
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={todo.textField}
-                                primaryTypographyProps={{ variant: 'body1' }}
-                                style={{
-                                    textDecoration: todo.completed ? 'line-through' : 'none',
-                                    marginLeft:'-16px',
-                                    paddingRight: '8px', // Adjust right padding
-                                }}
-                            />
-                        </ListItem>
-                    ))}
+                            </ListItem>
+                        );
+                    })}
                 </List>
             </Box>
 
