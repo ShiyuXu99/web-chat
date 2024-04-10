@@ -38,15 +38,12 @@ const ChatApp = ({userInfo}) => {
                 time: moment().format('LT')
             };
 
-            // let data = { ...prevMessages };
-            // if (!data[formattedDate]) {
-            //     data[formattedDate] = [];
-            // }
-            // data[formattedDate].push(currentMessage);
-            const updateData = {
-                [formattedDate]: arrayUnion(currentMessage)
-            };
-            await setDoc(doc(db, `User_chats`, `${userInfo?.photoURL}_chatHistory`), updateData);
+            let data = { ...prevMessages };
+            if (!data[formattedDate]) {
+                data[formattedDate] = [];
+            }
+            data[formattedDate].push(currentMessage);
+            await setDoc(doc(db, `User_chats`, `${userInfo?.photoURL}_chatHistory`), data);
             setMessage('');
         } catch (e) {
             console.error("Error adding document: ", e);
