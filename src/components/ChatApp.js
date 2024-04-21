@@ -43,8 +43,8 @@ const ChatApp = ({userInfo}) => {
                 data[formattedDate] = [];
             }
             data[formattedDate].push(currentMessage);
-            await setDoc(doc(db, `User_chats`, `${userInfo?.photoURL}_chatHistory`), data);
             setMessage('');
+            await setDoc(doc(db, `User_chats`, `${userInfo?.photoURL}_chatHistory`), data);
         } catch (e) {
             console.error("Error adding document: ", e);
         }
